@@ -40,7 +40,13 @@ int main(int argc, char *argv[])//takes in port number to run on.
               sizeof(serv_addr)) < 0) 
               error("ERROR on binding");
 	recvfrom (sockFD, buffer, 255, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr));
-     
+     //recieve filename
+	 //open file in binary mode
+	 //calculate total number of 512 byte parts
+	 //loop
+	 //send header
+	 //send part
+	 //close
 	
 	
 
