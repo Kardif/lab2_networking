@@ -12,10 +12,8 @@ int timer();
 int recieveFile(FILE*);
 char* processHeader();
 int sendACK(int);
-int checkSum(char*);
 
 
-static int hostPort = 7777;
 void error(char *msg)
 {
     perror(msg);
@@ -24,7 +22,7 @@ void error(char *msg)
 
 int main(int argc, char *argv[])//takes in "sender hostname(ip), sender port no, filename"
 {
-    int sockfd, recvfd; 
+    int sockfd, sockfd; 
     int sendPort, n;
     struct sockaddr_in serv_addr, host_addr;
 	FILE* requestedFile;
@@ -42,20 +40,12 @@ int main(int argc, char *argv[])//takes in "sender hostname(ip), sender port no,
     if (sockfd < 0) 
         error("ERROR creating socket");
 
-    bzero(&host_addr, sizeof host_addr);//set up host out port
-    host_addr.sin_family=AF_INET;  
-    host_addr.sin_port=htons(hostPort);
-    inet_pton(AF_INET,"127.0.0.1",&(host_addr.sin_addr));
-
-    n = bind(sockfd,(struct sockaddr *)&host_addr,sizeof(host_addr));
-    if(n<0)
-	error("ERROR binding Socket");
     
 	bzero(&serv_addr,sizeof serv_addr);// set up serv address
     serv_addr.sin_family=AF_INET;  
 	serv_addr.sin_port=htons(sendPort);
     inet_pton(AF_INET,argv[1],&(serv_addr.sin_addr));
-	n = bind(recvfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
+	n = bind(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
     if(n<0)
 	error("ERROR binding Socket");
 	
@@ -64,7 +54,7 @@ int main(int argc, char *argv[])//takes in "sender hostname(ip), sender port no,
 	buffer = ("GET %s", argv[3])
     n = sendto(sockfd,buffer,strlen(buffer),(struct sockaddr *)&serv_addr,sizeof(serv_addr)); //write to the socket
 	if (n<0) { error("error sending to socket");}
-	n=recieveFile(requestedFile, recvfd, (struct sockaddr *)&serv_addr);
+	n=recieveFile(requestedFile, sockfd, (struct sockaddr *)&serv_addr);
 	if (n<0) { error("error recieving file");}
 	
 	
@@ -114,14 +104,10 @@ int recieveFile(File* theFile, int recvFD, struct sockaddr* serv_addr){
 	total = atoi(strtok(null, "/"));
 	while(current<=total){
 		recvfrom (recvFD, buffer, 512, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr));
-		check = checkSUM(buffer);
-		if(check==0){
-			sendACK(current);
-			fprintf(theFile, buffer);//write checked bytes to file
-		}
-		else{
-			//do something if checksum fails? 
-		}
+		
+		sendACK(current);
+		fprintf(theFile, buffer);//write bytes to file
+		
 		if(current!=total){
 			xy = processHeader(recvFD, serv_addr);//read new header
 			current = atoi(strtok(xy, "/"));
@@ -132,12 +118,7 @@ int recieveFile(File* theFile, int recvFD, struct sockaddr* serv_addr){
 	}
 	
 }
-/*
- * Returns 0 if it checks out, -1 otherwise.
- * */
-int checkSUM(char* bits){
-	return 0;
-}
+
 /*
  * sends the ack for successfully recieved pieces.
  * */
