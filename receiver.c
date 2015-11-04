@@ -63,6 +63,7 @@ int main(int argc, char *argv[])//takes in "sender hostname(ip), sender port no,
     if(n<0)
 	error((char*)"ERROR binding Socket");
     
+	strcat(filename, "2");
     requestedFile = fopen(filename,"w");
     bzero(buffer,256);
 	strcpy(buffer, ("GET %s", argv[3]));
