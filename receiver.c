@@ -14,6 +14,7 @@
 #include <netdb.h> 
 #include <stddef.h>
 #include <arpa/inet.h>
+#include <unistd.h>
 
 //function Definitions
 int timer();
@@ -60,7 +61,9 @@ int main(int argc, char *argv[])//takes in "sender hostname(ip), sender port no,
     requestedFile = fopen(filename,"w");
     bzero(buffer,256);
 	strcpy(buffer, ("GET %s", argv[3]));
-    n = sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr)); //write to the socket
+   	socklen_t addrsize;
+	addrsize = sizeof(serv_addr);
+    n = sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&serv_addr, addrsize); //write to the socket
 	if (n<0) { error((char*)"error sending to socket");}
 	n=receiveFile(requestedFile, sockfd, &serv_addr);
 	if (n<0) { error((char*)"error recieving file");}
@@ -80,9 +83,10 @@ int main(int argc, char *argv[])//takes in "sender hostname(ip), sender port no,
  * */
 char* processHeader(int recvFD, struct sockaddr_in serv_addr){
 	char* result, header[256], seq, X, Y;
-	
+	socklen_t addrsize;
+	addrsize = sizeof(serv_addr);
 	while (strcmp(header, "\r\n")!=0){
-		recvfrom (recvFD, header, 255, 0,(struct sockaddr*)&serv_addr, sizeof(serv_addr));
+		recvfrom (recvFD, header, 255, 0,(struct sockaddr*)&serv_addr, &addrsize);
 		seq = *strtok(header, " ,.-\r\n");
 		if(strcmp(&seq, "SEQ_NUMBER")==0){
 			X = *strtok(NULL, " ,.-\r\n");
@@ -109,8 +113,10 @@ int receiveFile(FILE* theFile, int recvFD, struct sockaddr_in* serv_addr){
 	xy = processHeader(recvFD, *serv_addr);
 	current = atoi(strtok(xy, "/"));
 	total = atoi(strtok(NULL, "/"));
+	socklen_t addrsize;
+	addrsize = sizeof(serv_addr);
 	while(current<=total){
-		recvfrom (recvFD, buffer, 128, 0,(struct sockaddr*)&serv_addr, sizeof(serv_addr));
+		recvfrom (recvFD, buffer, 128, 0,(struct sockaddr*)&serv_addr, &addrsize);
 		
 		sendACK(current);
 		fprintf(theFile, "%s", buffer);//write bytes to file
