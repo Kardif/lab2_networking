@@ -1,3 +1,3 @@
 all: 
-	g++ -o recv.out receiver.c 
-	g++ -o send.out sender.c
+	g++ -g -o recv  receiver.c 
+	g++ -g -o send sender.c

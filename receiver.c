@@ -32,8 +32,9 @@ void error(char *msg)
 int main(int argc, char *argv[])//takes in "sender hostname(ip), sender port no, filename"
 {
     int sockfd; 
-    int sendPort, n;
-    struct sockaddr_in serv_addr;
+    int servPort, n;
+    struct sockaddr_in serv_addr, send_addr;
+	socklen_t addrsize, sendsize;
 	FILE* requestedFile;
     char *filename = argv[3];
     
@@ -44,7 +45,7 @@ int main(int argc, char *argv[])//takes in "sender hostname(ip), sender port no,
        exit(0);
     }
 
-    sendPort = atoi(argv[2]); //get port from cmd line.
+    servPort = atoi(argv[2]); //get port from cmd line.
     sockfd = socket(AF_INET, SOCK_DGRAM, 0); // new socket, tcp, ipv4
     if (sockfd < 0) 
         error((char*)"ERROR creating socket");
@@ -52,16 +53,20 @@ int main(int argc, char *argv[])//takes in "sender hostname(ip), sender port no,
     
 	bzero(&serv_addr,sizeof serv_addr);// set up serv address
     serv_addr.sin_family=AF_INET;  
-	serv_addr.sin_port=htons(sendPort);
+	serv_addr.sin_port=htons(servPort);
     inet_pton(AF_INET,argv[1],&(serv_addr.sin_addr));
-	n = bind(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+	bzero(&send_addr,sizeof send_addr);// set up send address
+    send_addr.sin_family=AF_INET;  
+	send_addr.sin_port=htons(servPort+1);
+    inet_pton(AF_INET,argv[1],&(send_addr.sin_addr));
+	n = bind(sockfd, (struct sockaddr*)&send_addr, sizeof(send_addr));
     if(n<0)
 	error((char*)"ERROR binding Socket");
     
     requestedFile = fopen(filename,"w");
     bzero(buffer,256);
 	strcpy(buffer, ("GET %s", argv[3]));
-   	socklen_t addrsize;
+   	
 	addrsize = sizeof(serv_addr);
     n = sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&serv_addr, addrsize); //write to the socket
 	if (n<0) { error((char*)"error sending to socket");}
@@ -81,12 +86,12 @@ int main(int argc, char *argv[])//takes in "sender hostname(ip), sender port no,
  * X/Y where x is the current part number and Y is the total.
  * 
  * */
-char* processHeader(int recvFD, struct sockaddr_in serv_addr){
+char* processHeader(int sendFD, struct sockaddr_in serv_addr){
 	char* result, header[256], seq, X, Y;
 	socklen_t addrsize;
 	addrsize = sizeof(serv_addr);
 	while (strcmp(header, "\r\n")!=0){
-		recvfrom (recvFD, header, 255, 0,(struct sockaddr*)&serv_addr, &addrsize);
+		recvfrom (sendFD, header, 255, 0,(struct sockaddr*)&serv_addr, &addrsize);
 		seq = *strtok(header, " ,.-\r\n");
 		if(strcmp(&seq, "SEQ_NUMBER")==0){
 			X = *strtok(NULL, " ,.-\r\n");

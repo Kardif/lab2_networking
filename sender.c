@@ -27,8 +27,8 @@ int main(int argc, char *argv[])//takes in port number to run on.
 
      int sockfd, port, n, size, i;
 	 struct stat st;
-     struct sockaddr_in serv_addr;
-	socklen_t addrsize;
+     struct sockaddr_in serv_addr, recv_addr;
+	socklen_t addrsize, recvsize;
 	 FILE* theFile;
 	 char buffer[256];
 
@@ -49,11 +49,19 @@ int main(int argc, char *argv[])//takes in port number to run on.
      if (bind(sockfd, (struct sockaddr*) &serv_addr,//binds socket to inPort and an ip.
               addrsize) < 0) 
               error((char*)"ERROR on binding");
-	 recvfrom (sockfd, buffer, 255, 0,(struct sockaddr*) &serv_addr, &addrsize);
+	//set up receive address
+	bzero((char *) &serv_addr, sizeof(serv_addr));
+     port = atoi(argv[1]+1);
+     recv_addr.sin_family = AF_INET;
+     recv_addr.sin_addr.s_addr = INADDR_ANY;
+     recv_addr.sin_port = htons(port);
+	recvsize = sizeof(recv_addr);
+
+	 recvfrom (sockfd, buffer, 255, 0,(struct sockaddr*) &recv_addr, &recvsize);
      //recieve filename
 	 theFile = fopen(buffer, "rb");
 	 //open file in binary mode
-	 fstat(fileno(theFile), &st);
+	 stat(buffer, &st);
 	 size = st.st_size;
 	 
 	 if(size%512==0){
