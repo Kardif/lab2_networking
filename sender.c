@@ -1,23 +1,26 @@
-/* Mini lab socket server
-Writer: Josh Brown
+/* server for basic rdt 3.0
+Writer: Josh Brown and Jared Headings
 Cse 3461 networking
-extra(non class provided) sources "https://vcansimplify.wordpress.com/2013/03/14/c-socket-tutorial-echo-server/"
+
 */
 
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include<string.h>
+#include <string.h>
 
-int sendFile();
-int sendHeader();
+
+
+int sendFile(FILE*, int, int, struct);
+int sendHeader(int, int, int, struct);
 
 
 int main(int argc, char *argv[])//takes in port number to run on. 
 {
 
-     int sockfd, port, n;
+     int sockfd, port, n, size, i;
+	 struct stat st;
      struct sockaddr_in serv_addr, cli_addr;
 	 FILE* theFile;
 	 char* buffer[256];
@@ -39,16 +42,46 @@ int main(int argc, char *argv[])//takes in port number to run on.
      if (bind(sockfd, (struct sockaddr *) &serv_addr,//binds socket to inPort and an ip.
               sizeof(serv_addr)) < 0) 
               error("ERROR on binding");
-	recvfrom (sockFD, buffer, 255, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr));
+	 recvfrom (sockFD, buffer, 255, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr));
      //recieve filename
+	 File = fopen(buffer, "rb");
 	 //open file in binary mode
+	 stat(filename, &st);
+	 size = st.st_size;
+	 
+	 if(size%512==0){
+		 size = size/512;
+	 }
+	 else{
+		 size = (size/512)+1;
+	 }
 	 //calculate total number of 512 byte parts
-	 //loop
-	 //send header
-	 //send part
-	 //close
+	
+	 n = sendFile(theFile, size, sockfd, serv_addr);
 	
 	
-
+	//close file
     return 0;
+}
+
+int sendFile(FILE* theFile, int total, int sockdesc, struct sockaddr_in serv_addr){
+	 i=0;
+	 char buffer(128);//128 4 4byte chars = 512 bytes
+	 while(i<total){
+		sendheader(i, total, sockdesc, serv_addr);
+		fread(buffer, 4, 128, theFile);
+		n = sendto(sockdesc,buffer,strlen(buffer),(struct sockaddr *)&serv_addr,sizeof(serv_addr));
+		i++;
+	 }
+}
+int sendHeader(int x, int total, int sockdesc, struct sockaddr_in serv_addr){
+	char* buffer;
+	buffer = ("SEQ_NUM %d /r/n", x);
+	n = sendto(sockdesc,buffer,strlen(buffer),(struct sockaddr *)&serv_addr,sizeof(serv_addr));
+	buffer = ("SEQ_TOTAL %d /r/n", total);
+	n = sendto(sockdesc,buffer,strlen(buffer),(struct sockaddr *)&serv_addr,sizeof(serv_addr));
+	buffer = ("/r/n");
+	n = sendto(sockdesc,buffer,strlen(buffer),(struct sockaddr *)&serv_addr,sizeof(serv_addr));
+	
+	
 }

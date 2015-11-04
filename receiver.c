@@ -1,4 +1,9 @@
-
+/*
+ * client for basic rdt 3.0
+ * Written by: Josh Brown and Jared Headings
+ * Cse 3461 Networking
+ * 
+ * */
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -96,14 +101,14 @@ char* processHeader(int recvFD, struct sockaddr* serv_addr){
  
 int recieveFile(File* theFile, int recvFD, struct sockaddr* serv_addr){
 
-	char* xy, buffer[513];
+	char* xy, buffer[128];
 	int total, current,check;
 	
 	xy = processHeader(recvFD, serv_addr);
 	current = atoi(strtok(xy, "/"));
 	total = atoi(strtok(null, "/"));
 	while(current<=total){
-		recvfrom (recvFD, buffer, 512, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr));
+		recvfrom (recvFD, buffer, 128, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr));
 		
 		sendACK(current);
 		fprintf(theFile, buffer);//write bytes to file
