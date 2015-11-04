@@ -1,2 +1,3 @@
 all: 
-	g++ client.c server.c
+	g++ -o recv.out receiver.c 
+	g++ -o send.out sender.c
