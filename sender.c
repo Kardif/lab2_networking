@@ -14,7 +14,7 @@ Cse 3461 networking
 
 
 int sendFile(FILE*, int, int, struct sockaddr_in, socklen_t);
-int sendHeader(int, int, int, struct sockaddr_in, socklen_t);
+void sendHeader(int, int, int, struct sockaddr_in, socklen_t);
 
 void error(char *msg)
 {
@@ -80,8 +80,9 @@ int sendFile(FILE* theFile, int total, int sockdesc, struct sockaddr_in serv_add
 		n = sendto(sockdesc,buffer,strlen(buffer),0 ,(struct sockaddr*) &serv_addr, addrsize);
 		i++;
 	 }
+    return 1;
 }
-int sendHeader(int x, int total, int sockdesc, struct sockaddr_in serv_addr, socklen_t addrsize){
+void sendHeader(int x, int total, int sockdesc, struct sockaddr_in serv_addr, socklen_t addrsize){
 	char buffer[128];
 	int n=0;
 	bzero(buffer,128);
