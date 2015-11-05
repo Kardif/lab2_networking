@@ -30,7 +30,7 @@ int main(int argc, char *argv[])//takes in port number to run on.
     struct sockaddr_in serv_addr, recv_addr;
 	socklen_t addrsize, recvsize;
     FILE* theFile;
-    char buffer[512];
+    char buffer[256];
 
 
     if (argc < 2) { //Error message if no port was passed, exit with program failure.
@@ -60,14 +60,16 @@ int main(int argc, char *argv[])//takes in port number to run on.
     recv_addr.sin_addr.s_addr = INADDR_ANY;
     recv_addr.sin_port = htons(port);
     recvsize = sizeof(recv_addr);
-
+	bzero(buffer, 256);
     recvfrom (sockfd, buffer, 255, 0,(struct sockaddr*) &recv_addr, &recvsize);
     //recieve filename
+	printf("opening the file\n");
+	printf("filename is %s\n", buffer);
     theFile = fopen(buffer, "rb");
     //open file in binary mode
     stat(buffer, &st);
     size = st.st_size;
-	 
+	 printf("size = %d\n", size);
     if(size%512==0){
         size = size/512;
     }
@@ -75,7 +77,7 @@ int main(int argc, char *argv[])//takes in port number to run on.
         size = (size/512)+1;
     }
     //calculate total number of 512 byte parts
-	
+	printf("calling sendfile\n");
     n = sendFile(theFile, size, sockfd, serv_addr, addrsize);
 	
 	
@@ -86,17 +88,21 @@ int main(int argc, char *argv[])//takes in port number to run on.
 int sendFile(FILE* theFile, int total, int sockdesc, struct sockaddr_in serv_addr, socklen_t addrsize){
 	 int n,i=0;
 	 char buffer[512];//128 4 4byte chars = 512 bytes
+	printf("before the while loop in sendfile\n");
 	 while(i<total){
+		printf("calling sendheader");
 		sendHeader(i, total, sockdesc, serv_addr, addrsize);
 		fread(buffer, 4, 128, theFile);
 		n = sendto(sockdesc,buffer,strlen(buffer), 0, (struct sockaddr*) &serv_addr, addrsize);
 		i++;
 	 }
+	printf("after the while loop in sendfi\n");
     return 1;
 }
 void sendHeader(int x, int total, int sockdesc, struct sockaddr_in serv_addr, socklen_t addrsize){
 	char buffer[128];
 	int n=0;
+	printf("sending header\n");
 	bzero(buffer,128);
 	sprintf(buffer, "SEQ_NUM %d /r/n", x);
 	n = sendto(sockdesc,buffer,strlen(buffer),0,(struct sockaddr*) &serv_addr, addrsize);
