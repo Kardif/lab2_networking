@@ -16,6 +16,7 @@ Cse 3461 networking
 
 int sendFile(FILE*, int, int, struct sockaddr_in, socklen_t);
 void sendHeader(int, int, int, struct sockaddr_in, socklen_t);
+int waitforACK();
 
 void error(char *msg)
 {
@@ -98,6 +99,7 @@ int sendFile(FILE* theFile, int total, int sockdesc, struct sockaddr_in serv_add
 		fread(buffer, 4, 128, theFile);
 		n = sendto(sockdesc,buffer,strlen(buffer), 0, (struct sockaddr*) &serv_addr, addrsize);
         printf("%s\n",buffer);
+		waitforACK();
 		i++;
 	 }
 	//printf("after the while loop in sendfile\n");
@@ -117,3 +119,13 @@ void sendHeader(int x, int total, int sockdesc, struct sockaddr_in serv_addr, so
 	n = sendto(sockdesc,buffer,strlen(buffer),0,(struct sockaddr*) &serv_addr, addrsize);
 	
 }
+int waitforACK(){
+	int i =0;
+	while(i<1000){
+
+	i++;
+
+	}	
+	return 0;
+}
+
