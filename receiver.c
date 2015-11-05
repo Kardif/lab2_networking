@@ -3,7 +3,9 @@
  * Written by: Josh Brown and Jared Headings
  * Cse 3461 Networking
  * 
- * */
+ *
+ */
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -31,8 +33,7 @@ void error(char *msg)
 
 int main(int argc, char *argv[])//takes in "sender hostname(ip), sender port no, filename"
 {
-    int sockfd; 
-    int servPort, n;
+    int sockfd, servPort, n;
     struct sockaddr_in serv_addr, send_addr;
 	socklen_t addrsize, sendsize;
 	FILE* requestedFile;
@@ -60,8 +61,10 @@ int main(int argc, char *argv[])//takes in "sender hostname(ip), sender port no,
 	send_addr.sin_port=htons(servPort+1);
     inet_pton(AF_INET,argv[1],&(send_addr.sin_addr));
 	n = bind(sockfd, (struct sockaddr*)&send_addr, sizeof(send_addr));
-    if(n<0)
-	error((char*)"ERROR binding Socket");
+    
+    if (n<0){
+        error((char*)"ERROR binding Socket");
+    }
     
 	strcat(filename, "2");
     requestedFile = fopen(filename,"w");
@@ -74,11 +77,11 @@ int main(int argc, char *argv[])//takes in "sender hostname(ip), sender port no,
 	n=receiveFile(requestedFile, sockfd, &serv_addr);
 	if (n<0) { error((char*)"error recieving file");}
 	
-	
     fclose(requestedFile);
     close(sockfd); //close socket
     
-    return 0;
+    printf("exiting...");
+    return 1;
 }
 
 
@@ -91,7 +94,11 @@ char* processHeader(int sendFD, struct sockaddr_in serv_addr){
 	char* result, header[256], seq, X, Y;
 	socklen_t addrsize;
 	addrsize = sizeof(serv_addr);
-	while (strcmp(header, "\r\n")!=0){
+    
+    printf("Entering process header while-loop.\n");
+	while (strncmp(header,"/r/n", 2) !=0){
+        printf("%s\n",header);
+        
 		recvfrom (sendFD, header, 255, 0,(struct sockaddr*)&serv_addr, &addrsize);
 		seq = *strtok(header, " ,.-\r\n");
 		if(strcmp(&seq, "SEQ_NUMBER")==0){
@@ -116,7 +123,10 @@ int receiveFile(FILE* theFile, int recvFD, struct sockaddr_in* serv_addr){
 	char* xy, buffer[128];
 	int total, current;
 	
+    printf("Entered process header function.\n");
 	xy = processHeader(recvFD, *serv_addr);
+    printf("Exited process header function.\n");
+    
 	current = atoi(strtok(xy, "/"));
 	total = atoi(strtok(NULL, "/"));
 	socklen_t addrsize;
@@ -134,6 +144,7 @@ int receiveFile(FILE* theFile, int recvFD, struct sockaddr_in* serv_addr){
 		else{
 			current++;
 		}
+        printf("Current: %d  Total: %d\n",current,total);
     }
     return 1;
 }
