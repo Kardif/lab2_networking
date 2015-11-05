@@ -35,12 +35,10 @@ int main(int argc, char *argv[])//takes in "sender hostname(ip), sender port no,
 {
     int sockfd, servPort, n;
     struct sockaddr_in serv_addr, send_addr;
-	socklen_t addrsize, sendsize;
+	socklen_t addrsize;
 	FILE* requestedFile;
     char *filename = argv[3];
     
-
-    char buffer[256];
     if (argc < 4) { //make sure enough args got passed.
        fprintf(stderr,"not enough args passed");
        exit(0);
@@ -48,6 +46,7 @@ int main(int argc, char *argv[])//takes in "sender hostname(ip), sender port no,
 
     servPort = atoi(argv[2]); //get port from cmd line.
     sockfd = socket(AF_INET, SOCK_DGRAM, 0); // new socket, tcp, ipv4
+    printf("%d\n",sockfd);
     if (sockfd < 0) 
         error((char*)"ERROR creating socket");
 
@@ -96,22 +95,27 @@ int main(int argc, char *argv[])//takes in "sender hostname(ip), sender port no,
 char* processHeader(int sendFD, struct sockaddr_in* serv_addr){
 	char* result;
 	char* seq;
-	char* X;
-	char* Y;
+	char* X = "";
+	char* Y = "";
 	char header[256];
 	socklen_t addrsize;
+    
+    
+    
+    printf("about to recieve file\n");
 	addrsize = sizeof(serv_addr);
-        recvfrom (sendFD, header, 255, 0,(struct sockaddr*)serv_addr, &addrsize);
+    recvfrom (sendFD, header, 255, 0,(struct sockaddr*)serv_addr, &addrsize);  //problem line
+    printf("recieved file\n");
 		
    	printf("Entering process header while-loop.\n");
-	printf("header = %s", header);
-	while (strncmp(header,"/r/n", 2) !=0){
+    
+	while (strncmp(header,"\r\n", 2) !=0){
         printf("%s\n",header);
         
 		
 		seq = strtok(header," ,.-\r\n");
-		printf("seq = %s\n", seq);
-		if(strcmp(seq, "SEQ_NUMBER")==0){
+		//printf("seq = %s\n", seq);
+		if(strcmp(seq, "SEQ_NUM")==0){
 			X = strtok(NULL, " ,.-\r\n");
 			printf("x = %s\n", X);
 		}
@@ -120,9 +124,9 @@ char* processHeader(int sendFD, struct sockaddr_in* serv_addr){
 			printf("y = %s\n", Y);
 		}
 		recvfrom (sendFD, header, 255, 0,(struct sockaddr*)serv_addr, &addrsize);
-		
 	}
 	sprintf(result, "%s/%s", X, Y);
+    printf("%s/%s", X, Y);
 	return result;
 	
 }

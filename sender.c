@@ -11,6 +11,7 @@ Cse 3461 networking
 #include <netinet/in.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <arpa/inet.h>
 
 
 int sendFile(FILE*, int, int, struct sockaddr_in, socklen_t);
@@ -78,10 +79,13 @@ int main(int argc, char *argv[])//takes in port number to run on.
     }
     //calculate total number of 512 byte parts
 	printf("calling sendfile\n");
-    n = sendFile(theFile, size, sockfd, serv_addr, addrsize);
+    n = sendFile(theFile, size, sockfd, recv_addr, recvsize);
+    printf("file sent!");
 	
 	
 	//close file
+    fclose(theFile);
+    printf("file closed!");
     return 0;
 }
 
@@ -90,28 +94,26 @@ int sendFile(FILE* theFile, int total, int sockdesc, struct sockaddr_in serv_add
 	 char buffer[512];//128 4 4byte chars = 512 bytes
 	printf("before the while loop in sendfile\n");
 	 while(i<total){
-		printf("calling sendheader");
 		sendHeader(i, total, sockdesc, serv_addr, addrsize);
 		fread(buffer, 4, 128, theFile);
 		n = sendto(sockdesc,buffer,strlen(buffer), 0, (struct sockaddr*) &serv_addr, addrsize);
+        printf("%s\n",buffer);
 		i++;
 	 }
-	printf("after the while loop in sendfi\n");
+	printf("after the while loop in sendfile\n");
     return 1;
 }
 void sendHeader(int x, int total, int sockdesc, struct sockaddr_in serv_addr, socklen_t addrsize){
 	char buffer[128];
 	int n=0;
-	printf("sending header\n");
 	bzero(buffer,128);
-	sprintf(buffer, "SEQ_NUM %d /r/n", x);
+	sprintf(buffer, "SEQ_NUM %d \r\n", x);
 	n = sendto(sockdesc,buffer,strlen(buffer),0,(struct sockaddr*) &serv_addr, addrsize);
 	bzero(buffer,128);
-	sprintf(buffer, "SEQ_TOTAL %d /r/n", total);
+	sprintf(buffer, "SEQ_TOTAL %d \r\n", total);
 	n = sendto(sockdesc,buffer,strlen(buffer),0,(struct sockaddr*) &serv_addr, addrsize);
 	bzero(buffer,128);
-	sprintf(buffer, "/r/n");
+	sprintf(buffer, "\r\n");
 	n = sendto(sockdesc,buffer,strlen(buffer),0,(struct sockaddr*) &serv_addr, addrsize);
-	
 	
 }
