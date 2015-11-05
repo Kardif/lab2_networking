@@ -151,15 +151,19 @@ int receiveFile(FILE* theFile, int recvFD, struct sockaddr_in* serv_addr){
 	addrsize = sizeof(serv_addr);
 	while(current<=total){
 		recvfrom (recvFD, buffer, 128, 0,(struct sockaddr*)&serv_addr, &addrsize);
+        
+        //random number for simulated packet loss
+        int prob = rand()/RAND_MAX*99+1;
 		
 		sendACK(current);
 		fprintf(theFile, "%s", buffer);//write bytes to file
 		
-		if(current!=total){
+		if(current!=total && prob > 5){
 			xy = processHeader(recvFD, serv_addr);//read new header
 			current = atoi(strtok(xy, "/"));
 		}
 		else{
+            printf("LOST PACKET!\n");
 			current++;
 		}
         printf("Current: %d  Total: %d\n",current,total);

@@ -80,19 +80,19 @@ int main(int argc, char *argv[])//takes in port number to run on.
     //calculate total number of 512 byte parts
 	printf("calling sendfile\n");
     n = sendFile(theFile, size, sockfd, recv_addr, recvsize);
-    printf("file sent!");
+    printf("file sent!\n");
 	
 	
 	//close file
     fclose(theFile);
-    printf("file closed!");
+    printf("file closed!\n");
     return 0;
 }
 
 int sendFile(FILE* theFile, int total, int sockdesc, struct sockaddr_in serv_addr, socklen_t addrsize){
 	 int n,i=0;
 	 char buffer[512];//128 4 4byte chars = 512 bytes
-	printf("before the while loop in sendfile\n");
+	//printf("before the while loop in sendfile\n");
 	 while(i<total){
 		sendHeader(i, total, sockdesc, serv_addr, addrsize);
 		fread(buffer, 4, 128, theFile);
@@ -100,7 +100,7 @@ int sendFile(FILE* theFile, int total, int sockdesc, struct sockaddr_in serv_add
         printf("%s\n",buffer);
 		i++;
 	 }
-	printf("after the while loop in sendfile\n");
+	//printf("after the while loop in sendfile\n");
     return 1;
 }
 void sendHeader(int x, int total, int sockdesc, struct sockaddr_in serv_addr, socklen_t addrsize){
