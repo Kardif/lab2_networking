@@ -12,7 +12,7 @@ Cse 3461 networking
 #include <string.h>
 #include <sys/stat.h>
 #include <arpa/inet.h>
-
+#include <unistd.h>
 
 int sendFile(FILE*, int, int, struct sockaddr_in, socklen_t);
 void sendHeader(int, int, int, struct sockaddr_in, socklen_t);
@@ -92,13 +92,18 @@ int main(int argc, char *argv[])//takes in port number to run on.
 
 int sendFile(FILE* theFile, int total, int sockdesc, struct sockaddr_in serv_addr, socklen_t addrsize){
 	 int n,i=0;
-	 char buffer[512];//128 4 4byte chars = 512 bytes
+	 n=0;
+	 char buffer[513];//128 4 4byte chars = 512 bytes
 	printf("before the while loop in sendfile\n");
-	 while(i<total){
+	 while(i<=total){
 		sendHeader(i, total, sockdesc, serv_addr, addrsize);
+		bzero(buffer, 513);
 		fread(buffer, 4, 128, theFile);
+		
 		n = sendto(sockdesc,buffer,strlen(buffer), 0, (struct sockaddr*) &serv_addr, addrsize);
         printf("%s\n",buffer);
+		
+		
 		waitforACK();
 		i++;
 	 }
@@ -107,16 +112,21 @@ int sendFile(FILE* theFile, int total, int sockdesc, struct sockaddr_in serv_add
 }
 void sendHeader(int x, int total, int sockdesc, struct sockaddr_in serv_addr, socklen_t addrsize){
 	char buffer[128];
+	//sleep(1);
 	int n=0;
 	bzero(buffer,128);
 	sprintf(buffer, "SEQ_NUM %d \r\n", x);
 	n = sendto(sockdesc,buffer,strlen(buffer),0,(struct sockaddr*) &serv_addr, addrsize);
+	printf("n = %d\n",n);
 	bzero(buffer,128);
 	sprintf(buffer, "SEQ_TOTAL %d \r\n", total);
 	n = sendto(sockdesc,buffer,strlen(buffer),0,(struct sockaddr*) &serv_addr, addrsize);
+	printf("n = %d\n",n);
 	bzero(buffer,128);
 	sprintf(buffer, "\r\n");
 	n = sendto(sockdesc,buffer,strlen(buffer),0,(struct sockaddr*) &serv_addr, addrsize);
+	printf("n = %d\n",n);
+	//sleep(1);
 	
 }
 int waitforACK(){

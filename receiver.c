@@ -74,7 +74,7 @@ int main(int argc, char *argv[])//takes in "sender hostname(ip), sender port no,
 	if (n<0) { error((char*)"error sending to socket");}
 
 	strcat(filename, "2");
-    requestedFile = fopen(filename,"w");	
+    requestedFile = fopen(filename,"wb");	
 
 	n=receiveFile(requestedFile, sockfd, &serv_addr);
 	if (n<0) { error((char*)"error recieving file");}
@@ -95,29 +95,35 @@ int main(int argc, char *argv[])//takes in "sender hostname(ip), sender port no,
 void processHeader(int sendFD, struct sockaddr_in* serv_addr, char* result){
 	
 	char* seq;
-	int X;
-	int Y;
+	int X=0;
+	int Y=0;
 	int i = 0;
+	int n =0;
 	char header[256];
+	char* location;
 	socklen_t addrsize;
         bzero(header, 256);
     
     
     printf("about to recieve file\n");
 	addrsize = sizeof(serv_addr);
-    recvfrom (sendFD, header, 255, 0,(struct sockaddr*)serv_addr, &addrsize);  //problem line
+    recvfrom (sendFD, header, 255, MSG_PEEK,(struct sockaddr*)serv_addr, &addrsize);  //problem line
+	printf("header =%s\n",header);
     printf("recieved file\n");
-		
+	location = strstr(header, "\r\n");
+	i = ((location-header))+2;
+	printf("i=:%d\n",i);
+	recvfrom (sendFD, header, i, 0,(struct sockaddr*)serv_addr, &addrsize);
    	printf("Entering process header while-loop.\n");
-    	printf("%s\n",header);
-	while (strncmp(header,"\r\n", 2) !=0&& i<20){
-        printf("%s\n",header);
+    	printf("header = %s\n",header);
+	while (strncmp(header,"\r\n", 2) !=0&&i!=2&&n<7){
+        
         
 		if(strlen(header)>=2){
-		seq = strtok(header," ,.-\r\n");
+		seq = strtok(header," ");
 		//printf("seq = %s\n", seq);
 		if(strncmp(seq, "SEQ_NUM",7)==0){
-			X = atoi(strtok(NULL, " ,.-\r\n"));
+			X = atoi(strtok(NULL, " "));
 			printf("x = %d\n", X);
 		}
 		else if(0==strncmp(seq, "SEQ_TOTAL",9)){
@@ -125,8 +131,16 @@ void processHeader(int sendFD, struct sockaddr_in* serv_addr, char* result){
 			printf("y = %d\n", Y);
 		}
 		}
-		recvfrom (sendFD, header, 255, 0,(struct sockaddr*)serv_addr, &addrsize);
-		i++;
+		recvfrom (sendFD, header, 255, MSG_PEEK,(struct sockaddr*)serv_addr, &addrsize);
+		printf("header =%s\n",header);
+		location = strstr(header, "\r\n");
+		i = ((location-header))+2;
+		printf("i=:%d\n",i);
+		bzero(header, 256);
+		recvfrom (sendFD, header, i, 0,(struct sockaddr*)serv_addr, &addrsize);
+		printf("header =%s\n",header);
+		n++;
+
 	}
 	sprintf(result, "%d/%d", X, Y);
 	
@@ -142,25 +156,43 @@ void processHeader(int sendFD, struct sockaddr_in* serv_addr, char* result){
  
 int receiveFile(FILE* theFile, int recvFD, struct sockaddr_in* serv_addr){
 
-	char xy[256], buffer[128];
+	char xy[256], buffer[1024];
+	char* location;
 	int total, current;
 	int i = 0;
-	
+	int n = 0;
+	int m =0;
     printf("Entered process header function.\n");
 	processHeader(recvFD, serv_addr, xy);
     printf("Exited process header function.\n");
     
 	current = atoi(strtok(xy, "/"));
 	total = atoi(strtok(NULL, "/"));
+	printf("curren = %d and total = %d", current, total);
 	socklen_t addrsize;
 	addrsize = sizeof(serv_addr);
-	while(current<=total&& i<20){
-		recvfrom (recvFD, buffer, 128, 0,(struct sockaddr*)&serv_addr, &addrsize);
-		
+	while(current<=total&&n<5){
+		//sleep(1);
+		bzero(buffer, 256);
+		n=recvfrom (recvFD, buffer, 255, MSG_PEEK,(struct sockaddr*)serv_addr, &addrsize);  //problem line
+		/**printf("buffer =%s\n",buffer);
+   		 printf("recieved file\n");
+		location = strstr(buffer, "\r\n");
+		if(location){
+			i = ((location-buffer));
+			printf("i=:%d\n",i);
+			n= recvfrom (recvFD, buffer, i, 0,(struct sockaddr*)&serv_addr, &addrsize);
+			printf("buffer = %s\n",buffer);
+		}**/
+		//else{
+			n= recvfrom (recvFD, buffer, n, 0,(struct sockaddr*)&serv_addr, &addrsize);
+			printf("buffer = %s\n",buffer);		
+		//}
+		fwrite(buffer, 4, n, theFile);//write bytes to file
+		//recvfrom(recvFD, buffer, 2, 0,(struct sockaddr*)&serv_addr, &addrsize);
 		sendACK(current);
-		fprintf(theFile, "%s", buffer);//write bytes to file
-		
 		if(current!=total){
+			sleep(1);
 			processHeader(recvFD, serv_addr,xy);//read new header
 			
 			current = atoi(strtok(xy, "/"));
@@ -171,7 +203,7 @@ int receiveFile(FILE* theFile, int recvFD, struct sockaddr_in* serv_addr){
 			current++;
 		}
         printf("Current: %d  Total: %d\n",current,total);
-	i++;
+	n++;
     }
     return 1;
 }
