@@ -81,23 +81,24 @@ int main(int argc, char *argv[])//takes in port number to run on.
     //calculate total number of 512 byte parts
 	printf("calling sendfile\n");
     n = sendFile(theFile, size, sockfd, recv_addr, recvsize);
-    printf("file sent!");
+    printf("file sent!\n");
 	
 	
 	//close file
     fclose(theFile);
-    printf("file closed!");
+    printf("file closed!\n");
     return 0;
 }
 
 int sendFile(FILE* theFile, int total, int sockdesc, struct sockaddr_in serv_addr, socklen_t addrsize){
 	 int n,i=0;
-	 n=0;
-	 char buffer[513];//128 4 4byte chars = 512 bytes
-	printf("before the while loop in sendfile\n");
-	 while(i<=total){
+
+	 char buffer[512];//128 4 4byte chars = 512 bytes
+	//printf("before the while loop in sendfile\n");
+	 while(i<total){
+		 
 		sendHeader(i, total, sockdesc, serv_addr, addrsize);
-		bzero(buffer, 513);
+		bzero(buffer, 512);
 		fread(buffer, 4, 128, theFile);
 		
 		n = sendto(sockdesc,buffer,strlen(buffer), 0, (struct sockaddr*) &serv_addr, addrsize);
@@ -107,7 +108,7 @@ int sendFile(FILE* theFile, int total, int sockdesc, struct sockaddr_in serv_add
 		waitforACK();
 		i++;
 	 }
-	printf("after the while loop in sendfile\n");
+	//printf("after the while loop in sendfile\n");
     return 1;
 }
 void sendHeader(int x, int total, int sockdesc, struct sockaddr_in serv_addr, socklen_t addrsize){
@@ -115,19 +116,26 @@ void sendHeader(int x, int total, int sockdesc, struct sockaddr_in serv_addr, so
 	//sleep(1);
 	int n=0;
 	bzero(buffer,128);
+    printf("%d\n",n);
+	
 	sprintf(buffer, "SEQ_NUM %d \r\n", x);
 	n = sendto(sockdesc,buffer,strlen(buffer),0,(struct sockaddr*) &serv_addr, addrsize);
 	printf("n = %d\n",n);
 	bzero(buffer,128);
+	printf("%d\n",n);
+	
 	sprintf(buffer, "SEQ_TOTAL %d \r\n", total);
 	n = sendto(sockdesc,buffer,strlen(buffer),0,(struct sockaddr*) &serv_addr, addrsize);
 	printf("n = %d\n",n);
 	bzero(buffer,128);
-	sprintf(buffer, "\r\n");
-	n = sendto(sockdesc,buffer,strlen(buffer),0,(struct sockaddr*) &serv_addr, addrsize);
-	printf("n = %d\n",n);
-	//sleep(1);
+	printf("%d\n",n);
 	
+	sprintf(buffer, "\r\n");
+	 n = sendto(sockdesc,buffer,strlen(buffer),0,(struct sockaddr*) &serv_addr, addrsize);
+
+	printf("%d\n",n);
+
+
 }
 int waitforACK(){
 	int i =0;
