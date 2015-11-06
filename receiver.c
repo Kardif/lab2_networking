@@ -95,8 +95,7 @@ int main(int argc, char *argv[])//takes in "sender hostname(ip), sender port no,
 void processHeader(int sendFD, struct sockaddr_in* serv_addr, char* result){
 	
 	char* seq;
-	int X;
-	int Y;
+	int X, Y = 0;
 	int i = 0;
 	char header[256];
 	socklen_t addrsize;
@@ -111,7 +110,6 @@ void processHeader(int sendFD, struct sockaddr_in* serv_addr, char* result){
    	printf("Entering process header while-loop.\n");
     	printf("%s\n",header);
 	while (strncmp(header,"\r\n", 2) !=0&& i<20){
-        printf("%s\n",header);
         
 		if(strlen(header)>=2){
 		seq = strtok(header," ,.-\r\n");
@@ -120,7 +118,7 @@ void processHeader(int sendFD, struct sockaddr_in* serv_addr, char* result){
 			X = atoi(strtok(NULL, " ,.-\r\n"));
 			printf("x = %d\n", X);
 		}
-		else if(0==strncmp(seq, "SEQ_TOTAL",9)){
+		else if(strncmp(seq, "SEQ_TOTAL",9)==0){
 			Y = atoi(strtok(NULL, " ,.-\r\n"));
 			printf("y = %d\n", Y);
 		}
@@ -130,7 +128,7 @@ void processHeader(int sendFD, struct sockaddr_in* serv_addr, char* result){
 	}
 	sprintf(result, "%d/%d", X, Y);
 	
-    printf("%s", result);
+    printf("%s\n", result);
 	//return result;
 	
 }
@@ -154,18 +152,17 @@ int receiveFile(FILE* theFile, int recvFD, struct sockaddr_in* serv_addr){
 	total = atoi(strtok(NULL, "/"));
 	socklen_t addrsize;
 	addrsize = sizeof(serv_addr);
-	while(current<=total&& i<20){
+	while(current<=total&& i<24){
 		recvfrom (recvFD, buffer, 128, 0,(struct sockaddr*)&serv_addr, &addrsize);
         
-        //random number for simulated packet loss
-        int prob = rand()/RAND_MAX*99+1;
+        //random number for simulated packet loss, rand mod 100 + 1 will yield a number between 1 and 100
+        int prob = rand()%100+1;
 		
 		sendACK(current);
 		fprintf(theFile, "%s", buffer);//write bytes to file
 		
-		if(current!=total){
+		if(current!=total && prob > 5){
 			processHeader(recvFD, serv_addr,xy);//read new header
-			
 			current = atoi(strtok(xy, "/"));
 			
 			printf("current = %d\n", current);

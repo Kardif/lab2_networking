@@ -109,14 +109,21 @@ void sendHeader(int x, int total, int sockdesc, struct sockaddr_in serv_addr, so
 	char buffer[128];
 	int n=0;
 	bzero(buffer,128);
+    printf("%d\n",n);
+    
 	sprintf(buffer, "SEQ_NUM %d \r\n", x);
 	n = sendto(sockdesc,buffer,strlen(buffer),0,(struct sockaddr*) &serv_addr, addrsize);
 	bzero(buffer,128);
+    printf("%d\n",n);
+    
 	sprintf(buffer, "SEQ_TOTAL %d \r\n", total);
 	n = sendto(sockdesc,buffer,strlen(buffer),0,(struct sockaddr*) &serv_addr, addrsize);
 	bzero(buffer,128);
+    printf("%d\n",n);
+    
 	sprintf(buffer, "\r\n");
 	n = sendto(sockdesc,buffer,strlen(buffer),0,(struct sockaddr*) &serv_addr, addrsize);
+    printf("%d\n",n);
 	
 }
 int waitforACK(){
